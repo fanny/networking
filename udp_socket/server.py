@@ -30,3 +30,4 @@ while True:
     data, addr = serverSocket.recvfrom(1024)
     operation, first_number, second_number = data.split(' ')
     print 'Result: ', calculator(operation, first_number, second_number)
+serverSocket.close()
