@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*- 
 import socket
+from threading import Thread
 
 LOCALHOST = '127.0.0.1'
 PORT = 6789
@@ -23,10 +24,11 @@ def calculator(operation, first_number, second_number):
 
 def handle_connection():
     data, addr = serverSocket.recvfrom(1024)
-    operation, first_number, second_number = data.split(' ')
-    
-    serverSocket.sendto('ACK', addr)
-    serverSocket.sendto(calculator(operation, first_number, second_number), addr)
+    operation, first_number, second_number = data.decode('utf-8').split(' ')
+    result = str(calculator(operation, first_number, second_number)).encode('utf-8')
+
+    serverSocket.sendto('ACK'.encode('utf-8'), addr)
+    serverSocket.sendto(result, addr)
 
 if __name__ == '__main__':
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -36,4 +38,6 @@ if __name__ == '__main__':
     while True:
         new_connection = Thread(target=handle_connection)
         new_connection.start()
+        new_connection.join(timeout=1)
+
     serverSocket.close()
