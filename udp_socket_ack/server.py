@@ -4,10 +4,6 @@ import socket
 LOCALHOST = '127.0.0.1'
 PORT = 6789
 
-
-serverSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-serverSocket.bind((LOCALHOST, PORT))
-
 def calculator(operation, first_number, second_number):
     result = 'Operação não cadastrada, pena.'
     first_number = int(first_number)
@@ -25,9 +21,19 @@ def calculator(operation, first_number, second_number):
 
     return result
 
-print('Server running on: ', PORT)
-while True:
+def handle_connection():
     data, addr = serverSocket.recvfrom(1024)
     operation, first_number, second_number = data.split(' ')
-    print 'Result: ', calculator(operation, first_number, second_number)
-serverSocket.close()
+    
+    serverSocket.sendto('ACK', addr)
+    serverSocket.sendto(calculator(operation, first_number, second_number), addr)
+
+if __name__ == '__main__':
+    serverSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    serverSocket.bind((LOCALHOST, PORT))
+    print('Server listening on: ', PORT)
+    
+    while True:
+        new_connection = Thread(target=handle_connection)
+        new_connection.start()
+    serverSocket.close()
