@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*- 
 import socket
 from threading import Thread
+import time
 
 LOCALHOST = '127.0.0.1'
 PORT = 6789
 
 def calculator(operation, first_number, second_number):
-    result = 'Operação não cadastrada, pena.'
+    result = '[ERROR] Your operation is not registered.'
     first_number = int(first_number)
     second_number = int(second_number) 
     if operation == 'ADD':
@@ -17,7 +18,7 @@ def calculator(operation, first_number, second_number):
         result = first_number * second_number
     elif operation == 'EXP':
         result = first_number ** second_number
-    elif operation == 'DIV ' and second_number != 0:
+    elif operation == 'DIV' and second_number != 0:
         result = first_number / second_number
 
     return result
@@ -28,6 +29,7 @@ def handle_connection():
     result = str(calculator(operation, first_number, second_number)).encode('utf-8')
 
     serverSocket.sendto('ACK'.encode('utf-8'), addr)
+    #time.sleep(3)
     serverSocket.sendto(result, addr)
 
 if __name__ == '__main__':

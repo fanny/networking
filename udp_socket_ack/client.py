@@ -9,28 +9,49 @@ def wait_ack(confirmations):
     server_answer, _ = clientSocket.recvfrom(1024)
     confirmations.put(server_answer.decode('utf-8'))
 
+def wait_data(responses):
+    server_answer, _ = clientSocket.recvfrom(1024)
+    responses.put(server_answer.decode('utf-8'))
+
+def create_connection(method, arg):
+    new_connection = Thread(target=method, args=(arg, ))
+    new_connection.start()
+    new_connection.join(timeout=2)
+
 if __name__ == '__main__':
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     confirmations = Queue()
+    responses = Queue()
+    ans = ''
+    result = ''
     print('Client running on: ', PORT)
 
     while True:
         message = input()
         clientSocket.sendto(message.encode('utf-8'), (LOCALHOST, PORT))
         
-        new_connection = Thread(target=wait_ack, args=(confirmations, ))
-        new_connection.start()
-        new_connection.join(timeout=2)
+        while(not confirmations.qsize()):
+            create_connection(wait_ack, confirmations)
 
-        if(confirmations.qsize()):
+        if confirmations.qsize():
+            while(not responses.qsize()):
+                print('here!')
+                create_connection(wait_data, responses)
             # Returns and remove the item
             ans = confirmations.get()
             if ans == 'ACK':
-                result, _ = clientSocket.recvfrom(1024)
-                print('Receveid  ACK  from server')
-                print('\n The Answer is: {}'.format(result.decode('utf-8')))
-        else:
-            print('ACK NOT RECEIVED! :(')
+                print('[SUCESS] Received ACK from server\n')
+                if responses.qsize():
+                    result = responses.get()
+                    if result and result != 'ACK':
+                        print('[SUCESS] The answer is: {}\n'.format(result))
+                    else:
+                        print('[ERROR] Result not received')
+                else:
+                    print('[ERROR] Result not received')
+            else:  
+                print('[ERROR] ACK not received')
+
     clientSocket.close()
 
 
